@@ -1,0 +1,139 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "patching-automation.fullname" . }}
+  labels:
+    {{- include "patching-automation.labels" . | nindent 4 }}
+spec:
+{{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+{{- end }}
+  selector:
+    matchLabels:
+      {{- include "patching-automation.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+    {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      labels:
+        {{- include "patching-automation.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "patching-automation.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+          {{- if and (not .Values.waitForDatabase) (not .Values.postgresql.enabled) }}
+            - name: SKIP_WAIT_FOR_EXTERNAL_DB
+              value: "true"
+          {{- end }}
+          {{- if or .Values.postgresql.enabled .Values.database.secrets.user .Values.database.user }}
+            - name: DB_USER
+            {{- if .Values.postgresql.enabled}}
+              value: "{{ .Values.postgresql.auth.username }}"
+            {{- else }}
+              valueFrom:
+                secretKeyRef:
+            {{- if .Values.database.secrets.user }}
+                  name: {{ tpl .Values.database.secrets.user.name . }}
+                  key: {{ tpl .Values.database.secrets.user.key . }}
+            {{- else if .Values.database.user }}
+                  name: {{ template "patching-automation.fullname" . }}-database-creds
+                  key: db-user
+            {{- end }}
+            {{- end }}
+          {{- end }}
+          {{- if or .Values.database.secrets.password .Values.database.password .Values.postgresql.enabled }}
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+            {{- if .Values.database.secrets.password }}
+                  name: {{ tpl .Values.database.secrets.password.name . }}
+                  key: {{ tpl .Values.database.secrets.password.key . }}
+            {{- else if .Values.database.password }}
+                  name: {{ template "patching-automation.fullname" . }}-database-creds
+                  key: db-password
+            {{- else if .Values.postgresql.enabled }}
+                  name: {{ .Release.Name }}-postgresql
+                  key: password
+            {{- end }}
+          {{- end }}
+          {{- if or .Values.postgresql.enabled .Values.database.host }}
+            - name: DB_HOST
+              value: {{ include "patching-automation.databaseHost" . | quote }}
+          {{- end }}
+          {{- if or .Values.postgresql.enabled .Values.database.port }}
+            - name: DB_PORT
+              value: {{ include "patching-automation.databasePort" . | quote }}
+          {{- end }}
+          {{- if or .Values.postgresql.enabled .Values.database.type }}
+            - name: DB_TYPE
+            {{- if .Values.postgresql.enabled}}
+              value: postgresql
+            {{- else -}}
+              value: "{{ .Values.database.type }}"
+            {{- end }}
+          {{- end }}
+          {{- with .Values.extraEnvironmentVariables }}
+          {{- tpl (toYaml .) $ | nindent 12 -}}
+          {{- end }}
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /ping
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /ping
+              port: http
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          {{- if .Values.patchingAutomation.customVolumeMounts  }}
+          volumeMounts:
+            {{- tpl .Values.patchingAutomation.customVolumeMounts $ | nindent 12 -}}
+          {{- end }}
+      {{- if .Values.patchingAutomation.customVolumes }}
+      volumes:
+        {{- tpl .Values.patchingAutomation.customVolumes $ | nindent 8 -}}
+      {{- end }}
+      initContainers:
+      {{- if .Values.waitForDatabase }}
+        - name: "wait-for-db"
+          image: "{{ .Values.initContainerImage }}"
+          command:
+          - 'sh'
+          - '-c'
+          - >
+            until nc -vv -z -w 2 {{ include "patching-automation.databaseHost" . }} {{ include "patching-automation.databasePort" . }} && echo database ok; do
+              sleep 2;
+            done;
+          resources:
+            {{- toYaml .Values.initContainers.resources | nindent 12 -}}
+
+      {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

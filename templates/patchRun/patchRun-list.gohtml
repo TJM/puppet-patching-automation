@@ -1,0 +1,26 @@
+{{- template "header.gohtml" . -}}
+<h1>{{ .title }}</h1>
+
+  {{- if .patch_runs -}}
+    <div>
+      <table class="main">
+        <tr>
+          <th>Name</th><th>Description</th><th>Start Time</th><th>End Time</th><th>Applications</th><th>Detail</th>
+        </tr>
+      {{- range .patch_runs -}}
+        <tr>
+          <td>{{ .Name }}</td>
+          <td>{{ .Description }}</td>
+          <td>{{ FormatAsISO8601 .StartTime }}</td>
+          <td>{{ FormatAsISO8601 .EndTime }}</td>
+          <td><button class="btn btn-primary" onClick="window.location.href='/patchRun/{{ .ID }}/applications'">Applications</button></td>
+          <td><button class="btn btn-primary" onClick="window.location.href='/patchRun/{{ .ID }}'">Details</button></td>
+        </tr>
+      {{- end -}}
+      </table>
+    </div>
+    {{- else -}}
+    <h6>No Patch Runs Found!</h6>
+  {{- end -}}
+
+{{- template "footer.gohtml" . -}}

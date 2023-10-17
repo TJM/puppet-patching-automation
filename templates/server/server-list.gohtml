@@ -1,0 +1,22 @@
+{{- /* NOTE: This is a partial template to be included inside other templates. */ -}}
+      <tr>
+        <th>Name</th>
+        <th>IP</th>
+        <th>Updates</th>
+        <th>Actions</th>
+      </tr>
+    {{- range . -}}
+      <tr>
+        <td>{{ .Name }}</td>
+        <td>{{ .IPAddress }}</td>
+        <td>{{ .PackageUpdates }}</td>
+        <td>
+          <button class="btn btn-primary" onClick="window.location.href='/server/{{ .ID }}/facts'" data-toggle="tooltip" title="Get Facts for this host from the PuppetServer" >Facts</button>
+          <button class="btn btn-primary" onClick="window.location.href='/server/{{ .ID }}'">Details</button>
+          <button id="patch-{{ .ID }}" class="patchButton btn btn-primary" value="/server/{{ .ID }}/runPatching">Patch</button>
+          <form class="singleButtonForm" method="post" action="/server/{{ .ID }}/runPatching">
+            <input type="submit" class="btn btn-primary" name="action" value="OldPatch">
+          </form>
+        </td>
+      </tr>
+    {{- end -}}

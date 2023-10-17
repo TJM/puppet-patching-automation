@@ -1,0 +1,32 @@
+<!--Embed the header.html template at this location-->
+{{- template "header.gohtml" . -}}
+  {{- if .jenkins_servers -}}
+  <div>
+    <table class="main">
+      <tr>
+        <th>Name</th>
+        <th>Description</th>
+        <th>Hostname</th>
+        <th>Enabled</th>
+        <th>Actions</th>
+      </tr>
+    {{- range .jenkins_servers -}}
+      <tr>
+        <td>{{ .Name }}</td>
+        <td>{{ .Description }}</td>
+        <td>{{ .Hostname }}</td>
+        <td>{{ if .Enabled }}✅{{ else }}🚨DISABLED🚨{{ end }}</td>
+        <td>
+          <button class="btn btn-primary" onClick="window.location.href='/config/jenkinsServer/{{ .ID }}'">Edit</button>
+          <button class="btn btn-primary" onClick="window.location.href='/config/jenkinsServer/{{ .ID }}/jobs'">Jobs</button>
+          <button class="btn btn-primary" onClick="window.location.href='/config/jenkinsServer/{{ .ID }}/apiJobs'">Jobs from API</button>
+        </td>
+      </tr>
+    {{- end -}}
+    </table>
+  </div>
+  {{- else -}}
+  <h6>No Jenkins Servers Found!</h6>
+  {{- end -}}
+
+{{- template "footer.gohtml" . -}}

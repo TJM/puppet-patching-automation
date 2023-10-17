@@ -1,0 +1,97 @@
+{{- /* NOTE: This is a partial template to be included inside other templates. */ -}}
+<div class="puppetServerForm">
+  <form id="puppetServer" method="post">
+  <table class="centerForm">
+    <tr>
+      <th id="formTitle" colspan="2">
+        {{- with .puppet_server.Name }}
+        <h3>Puppet Server: {{ . }}
+        {{- else -}}
+        <h3>Add New Puppet Server</h3>
+        {{- end -}}
+      </th>
+    {{- if .puppet_server.ID -}}
+    <tr>
+      <th><label for="Enabled">Enabled:</label></th>
+      <td>
+        <label class="switch">
+          <input type="checkbox" id="Enabled" name="Enabled" value="true" {{ if .puppet_server.Enabled }} checked {{ end }}>
+          <span class="slider round"></span>
+        </label>
+      </td>
+    </tr>
+    {{- else -}}
+    <input type="hidden" id="Enabled" name="Enabled" value="true">
+    {{- end -}}
+    <tr>
+      <th><label for="Name">Puppet Server Name:</label></th>
+      <td><input type="text" id="Name" name="Name" size="50" value="{{ .puppet_server.Name }}" required></td>
+    </tr>
+    <tr>
+      <th><label for="Description">Description:</label></th>
+      <td><input type="text" id="Description" name="Description" value="{{ .puppet_server.Description }}" size="50"></td>
+    </tr>
+    <tr>
+      <th><label for="Hostname">Hostname:</label></th>
+      <td><input type="text" id="Hostname" name="Hostname" size="50" value="{{ .puppet_server.Hostname }}" placeholder="FQDN, must match Puppet SSL Certificate" required></td>
+    </tr>
+    <tr>
+      <th><label for="FactName">Patch Group Fact Name:</label></th>
+      <td><input type="text" id="FactName" name="FactName" size="50" value="{{ .puppet_server.FactName }}" placeholder="(i.e. pe_patch.patch_group or os_patching.patch_window)" required></td>
+    </tr>
+    <tr>
+      <th><label for="SSL">SSL (https):</label></th>
+      <td>
+        <table width="100%" class="borderless">
+          <tr>
+            <td>
+              <label class="switch">
+                <input type="checkbox" id="SSL" name="SSL" value="true" {{ if .puppet_server.SSL }} checked {{ end }}>
+                <span class="slider round"></span>
+              </label>
+            </td>
+            <td class="right"><label for="SSLSkipVerify">Skip SSL Verification (<span class="text-danger">INSECURE</span>):</label></th>
+            <td>
+              <label class="switch">
+                <input type="checkbox" id="SSLSkipVerify" name="SSLSkipVerify" value="true" {{ if .puppet_server.SSLSkipVerify }} checked {{ end }}>
+                <span class="slider round"></span>
+              </label>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+    <tr>
+      <th><label for="PuppetDBPort">PuppetDB Port:</label></th>
+      <td><input type="number" id="PuppetDBPort" name="PuppetDBPort" size="5" min="1024" max="65535" maxlength="5" value="{{ with .puppet_server.PuppetDBPort }}{{ . }}{{ else }}8081{{ end }}" required></td>
+    </tr>
+    <tr>
+      <th><label for="RBACPort">RBAC Port:</label></th>
+      <td><input type="number" id="RBACPort" name="RBACPort" size="5" min="1024" max="65535" maxlength="5" value="{{ .puppet_server.RBACPort }}" required></td>
+    </tr>
+    <tr>
+      <th><label for="OrchPort">Orchestrator Port:</label></th>
+      <td><input type="number" id="OrchPort" name="OrchPort" size="5" min="1024" max="65535" maxlength="5" value="{{ .puppet_server.OrchPort }}" required></td>
+    </tr>
+    <tr>
+      <th><label for="CACert">CA Certificate:</label></th>
+      <td><textarea id="CACert" name="CACert" rows="15" width="100%" placeholder="cat /etc/puppetlabs/puppet/ssl/certs/ca.pem">{{ .puppet_server.CACert }}</textarea></td>
+    </tr>
+    <tr>
+      <th><label for="Token">Puppet Token:</label></th>
+      <td><input type="password" id="Token" name="Token" size="50" {{- if .puppet_server.Token -}} placeholder="(only needed if updating)" {{- else -}} placeholder="(puppet access login --lifetime 0 --print)" required {{- end -}}></td>
+    </tr>
+    <tr class="submit">
+      <td colspan="2">
+        <input type="submit" class="btn btn-primary" value=
+          "{{- if .puppet_server.ID -}}
+            Modify PuppetServer
+          {{- else -}}
+            Add PuppetServer
+          {{- end -}}">
+        <input type="reset" class="btn btn-secondary">
+      </td>
+    </tr>
+  </table>
+  </form>
+</div>

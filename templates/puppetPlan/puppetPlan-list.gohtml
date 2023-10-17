@@ -1,0 +1,98 @@
+{{- template "header.gohtml" . -}}
+  {{- with .puppet_server }}<h2>Puppet Server: {{ .Name }} {{- end -}}</h2>
+  {{- if .plans -}}
+  <div>
+    <table class="main">
+      <tr>
+        <th>Name</th>
+        <th>Environment<th>
+        <th>Description</th>
+        {{/* {{ if not .puppet_server }}<th>PuppetServer</th>{{ end }} */}}
+        <th>Enabled</th>
+        <th>Actions</th>
+      </tr>
+    {{- range .plans -}}
+      <tr>
+        <td>{{ .Name }}</td>
+        <td>{{ .Environment }}</td>
+        <td>{{ .Description }}</td>
+          {{/* {{ if not $.puppet_server }}<td><a href="/config/puppetServer/{{ .PuppetServer.ID }}">{{ .PuppetServer.Name }}</a></td>{{ end }} */}}
+        <td>{{ if .Enabled }}✅{{ else }}🚨DISABLED🚨{{ end }}</td>
+        <td>
+          <button class="btn btn-primary" onClick="window.location.href='/config/puppetPlan/{{ .ID }}'">Edit</button>
+          <form method="post" action="/config/puppetServer/{{ $.puppet_server.ID }}/disassociatePlan">
+            <input type="hidden" name="ID" value="{{ .ID }}">
+            <button class="btn btn-primary" name="Associate" value="{{ .ID }}">DisAssociate</button>
+          </form>
+        </td>
+      </tr>
+    {{- end -}}
+    </table>
+  </div>
+  {{- else -}}
+  <h6>No Puppet Plans Found!</h6>
+  {{- end -}}
+  {{ if .puppet_server }}
+  {{ if .unassociatedPlans }}
+  <h3>Unassociated Plans</h3>
+  <div id="AssociatePlans" class="container mx-auto">
+    <table class="main">
+      <tr>
+        <th>Name</th>
+        <th>Description</th>
+        <th>Enabled</th>
+        <th>Actions</th>
+      </tr>
+      {{- range .unassociatedPlans -}}
+      <tr>
+        <td>{{ .Name }}</td>
+        <td>{{ .Description }}</td>
+        <td>{{ if .Enabled }}✅{{ else }}🚨DISABLED🚨{{ end }}</td>
+        <td>
+          <form method="post" action="/config/puppetServer/{{ $.puppet_server.ID }}/associatePlan">
+            <input type="hidden" name="ID" value="{{ .ID }}">
+            <button class="btn btn-primary" name="Associate" value="{{ .ID }}">Associate</button>
+          </form>
+        </td>
+      </tr>
+      {{- end -}}
+    </table>
+  </div>
+  {{- end -}}
+  <div id="AddPlans" class="container mx-auto">
+    <form method="post" action="/config/puppetServer/{{ .puppet_server.ID }}/addPlan">
+      <fieldset>
+      <legend>Add Puppet Plans</legend>
+      <p>
+        <div class="input-group">
+        <label for="PuppetEnvironment">Puppet Environment:</label>
+          <div id="PuppetEnvironmentDiv">
+            <input type="text" class="typeahead" id="PuppetEnvironment" placeholder="Enter Puppet Environment" name="Environment" value="production" required>
+          </div>
+          <div class="input-group-text input-group-append">
+            <i id="PuppetEnvironment-Refresh" class="fa fa-refresh fa-1x" title="Refresh Environments"></i>
+          </div>
+        </div>
+      </p>
+      <p>
+        <div class="input-group">
+          <label for="Name">Puppet Plan Name:</label>
+          <div id="PuppetPlansDiv">
+            <input type="text" class="typeahead"  id="PlanName" name="Name" placeholder="Start typing to search plan names..." required>
+          </div>
+          <div class="input-group-text input-group-append">
+            <i id="PuppetPlans-Refresh" class="fa fa-refresh fa-1x" title="Refresh Patch Windows"></i>
+          </div>
+        </div>
+      </p>
+      <button type="submit" class="btn btn-primary">Add</button>
+      </fieldset>
+    </form>
+  </div>
+  <script type="text/javascript">
+    var puppetServerID = '{{ .puppet_server.ID }}'
+  </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/typeahead.js/0.11.1/typeahead.bundle.js" integrity="sha384-up5m4qUNHDA0trts45bnm/JBBOfOMbOKtm/uAUX17yitl3RroI3RbrzmkWKBPT3w" crossorigin="anonymous"></script>
+  <script type="text/javascript" src="/assets/js/puppetPlans.js" ></script>
+  {{ end }}
+{{- template "footer.gohtml" . -}}

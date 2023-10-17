@@ -1,0 +1,108 @@
+{{- template "header.gohtml" . -}}
+    <h1>{{ .application.Name }} ({{ .environment.Name }}) Components </h1>
+    {{- if .components -}}
+    {{- range .components -}}
+      {{- $component := . -}}
+      {{- $puppetServers := .GetPuppetServers -}}
+      {{- $puppetServersCount := len $puppetServers -}}
+        {{- range $puppetServers -}}
+          {{- $puppetServer := . }}
+    <h2 id="component-{{ $component.ID }}-puppetServer-{{ $puppetServer.ID }}">{{ $component.Name }}</h2>
+    {{- if gt $puppetServersCount 1 -}}<h6 id="puppetServer-{{ $puppetServer.ID }}">PuppetServer: {{ $puppetServer.Name }}</h6>{{- end -}}
+    <table class="table-striped" id="component-{{ $component.ID }}">
+      <tr>
+        <th colspan="100">Component Actions</th>
+      </tr>
+      <tr>
+      {{- with $component.GetPuppetPlans $puppetServer.ID }}
+      <tr>
+        <th>Puppet Plans</th>
+        <td colspan="100">
+          <table class="borderless inside" id="puppetPlans-{{ $component.ID }}">
+          {{- range . }}
+            <tr>
+              <td>
+                <a href="/config/puppetPlan/{{.ID}}">{{ .Name }}</a>
+              </td>
+              <td class="right">
+                <button class="btn btn-info" onClick="window.location.href='/component/{{ $component.ID }}/runPuppetPlan/{{ $puppetServer.ID }}/{{ .ID }}'">PREVIEW</button>
+                <form class="singleButtonForm" method="post" action="/component/{{ $component.ID }}/runPuppetPlan/{{ $puppetServer.ID }}/{{ .ID }}">
+                  <input type="submit" class="btn btn-primary" name="action" value="Run" {{- if not .Enabled }} disabled {{- end -}}>
+                </form>
+              </td>
+            </tr>
+          {{- end -}}
+          </table>
+          {{- with $component.GetPuppetJobs $puppetServer.ID "Plan" -}}
+          <hr>
+          <table class="borderless inside" id="puppetJobsPlan-{{ $component.ID }}">
+          {{- range . -}}
+            <tr>
+              <td><a href="{{.ConsoleURL}}" target="_blank">{{ .Name }} - {{ FormatAsISO8601 .CreatedAt }}{{ with .Status }} - {{ . }}{{ end }}</a></td>
+            </tr>
+          {{- end -}}
+          </table>
+        {{- end -}}
+        </td>
+      </tr>
+      {{- end -}}
+      {{- with $component.GetPuppetTasks $puppetServer.ID }}
+      <tr>
+        <th>Puppet Tasks</th>
+        <td colspan="100">
+          <table class="borderless inside" id="puppetTasks-{{ $component.ID }}">
+          {{- range . }}
+            <tr>
+              <td>
+                <a href="/config/puppetTask/{{.ID}}">{{ .Name }}</a>
+              </td>
+              <td class="right">
+                <button class="btn btn-info" onClick="window.location.href='/component/{{ $component.ID }}/runPuppetTask/{{ $puppetServer.ID }}/{{ .ID }}'">PREVIEW</button>
+                <form class="singleButtonForm" method="post" action="/component/{{ $component.ID }}/runPuppetTask/{{ $puppetServer.ID }}/{{ .ID }}">
+                  <input type="submit" class="btn btn-primary" name="action" value="Run" {{- if not .Enabled }} disabled {{- end -}}>
+                </form>
+              </td>
+            </tr>
+          {{- end -}}
+          </table>
+          {{- with $component.GetPuppetJobs $puppetServer.ID "Task" -}}
+          <hr>
+          <table class="borderless inside" id="puppetJobsTask-{{ $component.ID }}">
+          {{- range . -}}
+            <tr>
+              <td><a href="{{.ConsoleURL}}" target="_blank">{{ .Name }} - {{ FormatAsISO8601 .CreatedAt }}{{ with .Status }} - {{ . }}{{ end }}</a></td>
+            </tr>
+          {{- end -}}
+          </table>
+        {{- end -}}
+        </td>
+      </tr>
+      {{- end -}}
+      <tr>
+        <th>Default Actions</th>
+        <td class="right" colspan="100">
+          <form class="singleButtonForm" method="post" action="/component/{{ $component.ID }}/runPatching">
+            <input type="submit" class="btn btn-primary" name="action" value="Patch All" {{- if not $component.HealthCheckScript -}} disabled {{- end -}}>
+          </form>
+          {{- with $component.GetPuppetJobs $puppetServer.ID "Default" -}}
+          <hr>
+          <table class="borderless inside" id="puppetJobsDefault-{{ $component.ID }}">
+          {{- range . -}}
+            <tr>
+              <td><a href="{{.ConsoleURL}}" target="_blank">{{ .Name }} - {{ FormatAsISO8601 .CreatedAt }} {{ with .Status }}- {{ . }}{{ end }}</a></td>
+            </tr>
+          {{- end -}}
+          </table>
+        {{- end -}}
+        </td>
+      </tr>
+      {{- template "server-list.gohtml" $component.GetServersOnPuppetServer $puppetServer.ID }}
+    </table>
+    <br>
+    {{- end -}}
+    {{- end -}}
+    {{- else -}}
+    <h6>No Components Found!</h6>
+    {{- end -}}
+    <script type="text/javascript" src="/assets/js/patchServer.js" ></script>
+{{- template "footer.gohtml" . -}}

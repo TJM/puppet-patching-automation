@@ -1,0 +1,68 @@
+{{- template "header.gohtml" . -}}
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="/">Home</a></li>
+        <li class="breadcrumb-item"><a href="/environment/{{ .component.EnvironmentID }}/components">Back to Environment/Components</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Puppet Plan Preview</li>
+      </ol>
+    </nav>
+    <h1>Plan: {{ .puppetPlan.Name }}</h1>
+    <h2>Component: {{ .component.Name }}</h2>
+
+  <div class="puppetPlanForm">
+  <form method="post">
+    <table class="centerForm">
+      <tr>
+        <th id="formTitle" colspan="2">
+          <h3>{{ .puppetPlan.Name }}
+        </th>
+      <tr>
+        <th>Description:</th>
+        <td>{{ .puppetPlan.Description }}</td>
+      </tr>
+
+      <tr>
+        <th>Parameters:</th>
+        <td>
+        {{- if .puppetPlan.GetParams -}}
+        {{- range .puppetPlan.GetParams -}}
+          <table class="inside" id="jenkinsParameters">
+            <tr>
+              <th>Name:</th>
+              <td>{{ .Name }}</td>
+            </tr>
+            <tr>
+              <th>Type:</th>
+              <td>{{ .Type }}</td>
+            </tr>
+            <tr>
+              <th>Description:</th>
+              <td>{{ .Description }}</td>
+            </tr>
+            <tr>
+              <th>Value:</th>
+              <td>
+                <textarea id="Params-{{ .ID }}" name="Params[{{ .Name }}]" rows="3" cols="65" placeholder="{{ .GetDefaultValue }}">{{ index $.params .Name }}</textarea>
+              </td>
+            </tr>
+          </table>
+          <br>
+        {{- end -}}
+        {{- else -}}
+        (none)
+        {{- end -}}
+        </td>
+      </tr>
+      <tr class="submit">
+        <td colspan="2">
+        <input type="submit" class="btn btn-primary" name="action" value="Run" {{- if not .puppetPlan.Enabled }} disabled {{- end -}}> <input type="reset" class="btn btn-secondary">
+        </td>
+      </tr>
+    </table>
+  </form>
+  </div>
+
+
+
+  </body>
+</html>

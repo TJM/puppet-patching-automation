@@ -1,0 +1,127 @@
+{{- /* NOTE: This is a partial template to be included inside other templates. */ -}}
+  <div class="puppetPlanForm">
+    <table class="centerForm">
+      <tr>
+        <th id="formTitle" colspan="2">
+          {{- with .plan.Name }}
+          <h3>Puppet Plan: {{ . }}
+          {{- else -}}
+          <h3>Add New Puppet Plan</h3>
+          {{- end -}}
+        </th>
+      {{- if .plan.ID -}}
+      <form id="puppetPlan" method="post">
+      <tr>
+        <th><label for="Enabled">Enabled:</label></th>
+        <td>
+            <label class="switch">
+              <input type="checkbox" id="Enabled" name="Enabled" value="true" {{ if .plan.Enabled }} checked {{ end }}>
+              <span class="slider round"></span>
+            </label>
+        </td>
+      </tr>
+      <tr>
+        <th>Available On:</th>
+        <td>
+          <table class="borderless">
+            <tr>
+              <td class="switches">
+                <label class="switch">
+                  <input type="checkbox" id="IsForPatchRun" name="IsForPatchRun" value="true" {{ if .plan.IsForPatchRun }} checked {{ end }}>
+                  <span class="slider round"></span>
+                </label>
+                <label id="IsForPatchRun">Patch Run</label>
+              </td>
+              <td class="switches">
+                <label class="switch">
+                  <input type="checkbox" id="IsForApplication" name="IsForApplication" value="true" {{ if .plan.IsForApplication }} checked {{ end }}>
+                  <span class="slider round"></span>
+                </label>
+                <label id="IsForApplication">Application</label>
+              </td>
+              <td class="switches">
+                <label class="switch">
+                  <input type="checkbox" id="IsForComponent" name="IsForComponent" value="true" {{ if .plan.IsForComponent }} checked {{ end }}>
+                  <span class="slider round"></span>
+                </label>
+                <label id="IsForComponent">Component</label>
+              </td>
+              <td class="switches">
+                <label class="switch">
+                  <input type="checkbox" id="IsForServer" name="IsForServer" value="true" {{ if .plan.IsForServer }} checked {{ end }}>
+                  <span class="slider round"></span>
+                </label>
+                <label id="IsForServer">Server</label>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+      {{- end -}}
+      <tr>
+        <th>Name:</th>
+        <td>{{ .plan.Name }}</td>
+      </tr>
+      <tr>
+        <th>Environment:</th>
+        <td>{{ .plan.Environment }}</td>
+      </tr>
+      <tr>
+        <th>Description:</th>
+        <td>{{ .plan.Description }}</td>
+      </tr>
+      <tr>
+        <th>Associated Servers:</th>
+        <td>
+          {{ with .plan.GetPuppetServers }}
+          <ul>
+            {{ range . }}
+            <li><a href="/config/puppetServer/{{ .ID }}/plans ">{{ .Name }}</a></li>
+            {{ end }}
+          </ul>
+          {{ else }}
+          (none)
+          {{ end }}
+        </td>
+      </tr>
+      <tr class="submit">
+        <td colspan="2"><input type="submit" class="btn btn-primary"> <input type="reset" class="btn btn-secondary"></td>
+      </tr>
+      </form>
+      {{- if .plan.ID }}
+      <tr class="submit">
+        <td colspan="2">
+          <table class="borderless">
+            <tr class="submit">
+              <td>
+                <form method="post" action="/config/puppetPlan/{{ .plan.ID }}/updateFromAPI">
+                  <input type="submit" class="btn btn-primary" value="Update from API">
+                </form>
+              </td>
+              <td>
+                <form method="post" action="/config/puppetPlan/{{ .plan.ID }}">
+                  <input type="hidden" name="_method" value="DELETE">
+                  <input type="submit" class="btn btn-danger" value="Delete">
+                </form>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+      {{- end -}}
+      {{/* Parameters Each have their own FORM, so we have to end our form above here. */}}
+      <tr>
+        <th>Parameters:</th>
+        <td>
+        {{- if .plan.GetParams -}}
+        {{- range .plan.GetParams -}}
+          {{- template "puppetPlanParam-form.gohtml" . -}}
+          <br>
+        {{- end -}}
+        {{- else -}}
+        (none)
+        {{- end -}}
+        </td>
+      </tr>
+    </table>
+  </div>

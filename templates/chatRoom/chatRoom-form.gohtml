@@ -1,0 +1,46 @@
+{{- /* NOTE: This is a partial template to be included inside other templates. */ -}}
+  <div class="ChatRoomForm">
+    <form id="ChatRoom" method="post">
+    <table class="centerForm">
+      <tr>
+        <th id="formTitle" colspan="2">
+          {{- with .room.Name }}
+          <h3>Chat Room: {{ . }}
+          {{- else -}}
+          <h3>Add New Chat Room</h3>
+          {{- end -}}
+        </th>
+      {{- if .room.ID -}}
+      <tr>
+        <th><label for="Enabled">Enabled:</label></th>
+        <td>
+          <label class="switch">
+            <input type="checkbox" id="Enabled" name="Enabled" value="true" {{ if .room.Enabled }} checked {{ end }}>
+            <span class="slider round"></span>
+          </label>
+        </td>
+      </tr>
+      {{- else -}}
+      <input type="hidden" id="Enabled" name="Enabled" value="true">
+      {{- end -}}
+      <tr>
+        <th><label for="Name">Chat Room Name:</label></th>
+        <td><input type="text" id="Name" name="Name" size="50" value="{{ .room.Name }}" required></td>
+      </tr>
+      <tr>
+        <th><label for="Description">Description:</label></th>
+        <td><input type="text" id="Description" name="Description" value="{{ .room.Description }}" size="50"></td>
+      </tr>
+      <tr>
+        <th><label for="WebhookURL">WebhookURL:</label></th>
+        <td><input type="text" id="WebhookURL" name="WebhookURL" size="50" value="{{ .room.WebhookURL }}" placeholder="Get WebhookURL from Chat Interface" required></td>
+      </tr>
+      <tr class="submit">
+        <td colspan="2">
+          <input type="submit" class="btn btn-primary" value="{{- if .room.ID -}} Modify Chat Room {{- else -}} Add Chat Room {{- end -}}">
+          <input type="reset" class="btn btn-secondary">
+        </td>
+      </tr>
+    </table>
+    </form>
+  </div>

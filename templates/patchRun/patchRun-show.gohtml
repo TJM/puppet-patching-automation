@@ -1,0 +1,32 @@
+{{- template "header.gohtml" . -}}
+  {{- if .patch_run.Name -}}
+    <h1>Patch Run: {{ .patch_run.Name }}</h1>
+  {{- else -}}
+    <h1>Create New Patch Run</h1>
+  {{- end -}}
+
+  {{- if isPuppetServersEnabled -}}
+    {{- template "patchRun-form.gohtml" . -}}
+  {{- else -}}
+    <div class="managePuppetServers">
+        <table class="centerForm borderless">
+        <tr>
+          <th id="formTitle" colspan="2">
+            <h3>Add a Puppet Server</h3>
+          </th>
+        </tr>
+        <tr>
+          <td>
+            Before adding a Patch Run, you should first add (or enable) a Puppet Server...
+          </td>
+        </tr>
+        <tr class="submit">
+          <td>
+            <button class="btn btn-primary" onClick="window.location.href='/config/puppetServer'">Manage Puppet Servers</button>
+          </td>
+        </tr>
+      </table>
+    </div>
+  {{- end -}}
+
+{{- template "footer.gohtml" . -}}

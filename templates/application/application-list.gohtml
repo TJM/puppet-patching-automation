@@ -1,0 +1,19 @@
+{{- template "header.gohtml" . -}}
+    <h1>Applications for Patch Run: {{ .patchRun.Name }}</h1>
+    {{- if .applications -}}
+    <table>
+      <tr>
+        <th>Name</th><th>Patching Procedure</th><th>Environments</th>
+      </tr>
+    {{- range .applications -}}
+      <tr>
+        <td>{{ .Name }}</td>
+        <td><a href="{{ .PatchingProcedure }}">{{ .PatchingProcedure }}</a></td>
+        <td><button class="btn btn-primary" onClick="window.location.href='/application/{{ .ID }}/environments'">Environments</button></td>
+      </tr>
+    {{- end -}}
+    </table>
+    {{- else -}}
+    <h6>No Applications Found!</h6>
+    {{- end -}}
+{{- template "footer.gohtml" . -}}

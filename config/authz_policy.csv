@@ -1,0 +1,46 @@
+# RBAC Policies
+
+## RBAC policy for role: admin
+
+p, admin, patchRunStuff, read
+p, admin, patchRunStuff, write
+p, admin, patchRunStuff, delete
+p, admin, patchRunStuff, run
+
+p, admin, config, read
+p, admin, config, write
+p, admin, config, delete
+
+## RBAC Policy for role: patcher
+
+p, patcher, patchRunStuff, read
+p, patcher, patchRunStuff, write
+p, patcher, patchRunStuff, run
+p, patcher, config, read
+
+## RBAC Policy for role: Everyone (all logged in users)
+p, *, patchRunStuff, read
+
+
+## Role (group) Assignments - these should be in the database
+
+
+
+## Group (Resource) Assignments
+g2, patchRun, patchRunStuff
+g2, application, patchRunStuff
+g2, environment, patchRunStuff
+g2, component, patchRunStuff
+g2, server, patchRunStuff
+g2, puppetTaskRun, patchRunStuff
+g2, puppetPlanRun, patchRunStuff
+g2, jenkinsJobRun, patchRunStuff
+g2, trelloBoard, patchRunStuff
+
+g2, puppetServer, config
+g2, puppetTask, config
+g2, puppetPlan, config
+g2, jenkinsServer, config
+g2, jenkinsJob, config
+g2, chatRoom, config
+g2, role, config

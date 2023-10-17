@@ -1,0 +1,56 @@
+{{- /* NOTE: This is a partial template to be included inside other templates. */ -}}
+<nav class="navbar navbar-expand-sm bg-dark">
+  <div class="navbar-text"><a class="nav-link" href='/'>Patching Automation</a></div>
+  <ul class="navbar-nav mr-auto">
+    {{/* <a class="nav-link" href="/config/puppetServer">Puppet Servers</a> */}}
+    <li class="nav-item dropdown">
+      <a class="btn nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">Puppet</a>
+      <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+        <a class="dropdown-item nav-link" href="/config/puppetServer">Puppet Servers</a>
+        <a class="dropdown-item nav-link" href="/config/puppetTask">Puppet Tasks</a>
+        <a class="dropdown-item nav-link" href="/config/puppetPlan">Puppet Plans</a>
+        <div class="dropdown-divider"></div>
+        <a class="dropdown-item nav-link" href="/config/puppetServer/new">New Puppet Server</a>
+      </div>
+    </li>
+    <li class="nav-item dropdown">
+      <a class="nav-link dropdown-toggle" href='#' id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Jenkins Servers</a>
+      <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+        <a class="dropdown-item nav-link" href="/config/jenkinsServer">Jenkins Servers</a>
+        <div class="dropdown-divider"></div>
+        <a class="dropdown-item nav-link" href="/config/jenkinsServer/new">New Jenkins Server</a>
+      </div>
+    </li>
+    <li class="nav-item dropdown">
+      <a class="nav-link dropdown-toggle" href='#' id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Chat Rooms</a>
+        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+          <a class="dropdown-item nav-link" href='/config/ChatRoom'>Chat Rooms</a>
+          <div class="dropdown-divider"></div>
+          <a class="dropdown-item nav-link" href="/config/ChatRoom/new">New Chat Room</a>
+        </div>
+    </li>
+    <li class="nav-item dropdown">
+      <a class="nav-link dropdown-toggle" href='#' id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Patch Runs</a>
+        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+          <a class="dropdown-item nav-link" href='/patchRun'>Patch Runs</a>
+          <div class="dropdown-divider"></div>
+          <a class="dropdown-item nav-link" href="/patchRun/new">New Patch Run</a>
+        </div>
+    </li>
+  </ul>
+  <ul class="navbar-nav ml-auto">
+    {{- with .session.Get "name" -}}
+      <a class="nav-link" href='/logout'>Logout {{ . }}</a>
+    {{- else -}}
+      <a class="nav-link" href='/login'>Login</a>
+    {{- end -}}
+        <a class="nav-link" href="/config/role"><i id="Manage Roles" class="fa fa-cogs fa-inverse" aria-hidden="true" title="Manage Roles"></i></a>
+  </ul>
+</nav>
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+      {{- range .breadcrumbs }}
+      <li class="breadcrumb-item {{- if .Active }} active {{- end }}">{{- if .Active }}{{ .Name }}{{ else }}<a href="{{ .URL }}">{{ .Name }}</a>{{ end }}</li>
+      {{- end }}
+    </ol>
+  </nav>

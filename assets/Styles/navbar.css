@@ -1,0 +1,38 @@
+a.nav-link {
+  display: block;
+  color: white;
+  text-align: center;
+  padding: 14px 16px;
+  text-decoration: none;
+  border-right: 5px solid #343a40;
+  /* background-color: #343a40; */
+}
+
+.dropdown-menu {
+  /* background-color: #343a40!important; */
+  color: darkgray;
+}
+
+a.nav-link.dropdown-item {
+  color: gray;
+}
+
+a.nav-link:hover:not(.active) {
+  background-color: #111;
+  color: lightgray;
+  text-decoration: none;
+}
+
+a.nav-link.active {
+  background-color: #FBAA12;
+}
+
+a.navbar-brand, a.navbar-brand:hover:not(.active) {
+  color: white;
+}
+
+/* Site Title */
+.navbar-text {
+  color: lightgray;
+  padding-right: 0.75em;
+}

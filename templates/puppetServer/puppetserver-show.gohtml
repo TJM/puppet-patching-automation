@@ -1,0 +1,25 @@
+{{- template "header.gohtml" . -}}
+  {{- if .puppet_server.ID -}}
+    <h2>Name: {{ .puppet_server.Name }}</h2>
+  {{- else -}}
+    <h2>Add New Puppet Server</h2>
+  {{- end -}}
+  {{- template "puppetserver-form.gohtml" . -}}
+  {{- if .puppet_server.ID -}}
+    <table class="borderless">
+      {{- if .puppet_server.DeletedAt.Valid -}}
+      <tr>
+        <th>Deleted At</th><td>{{ .puppet_server.DeletedAt.Time }}</td>
+      </tr>
+      {{- end -}}
+      <tr>
+        <td class="right">
+          <form method="post" action="/config/puppetServer/{{ .puppet_server.ID }}">
+            <input type="hidden" name="_method" value="DELETE">
+            <input type="submit" class="btn btn-danger" value="Delete">
+          </form>
+        </td>
+      </tr>
+    </table>
+  {{- end -}}
+{{- template "footer.gohtml"}}

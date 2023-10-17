@@ -1,0 +1,199 @@
+{{- /* NOTE: This is a partial template to be included inside other templates. */ -}}
+<div class="patchRunForm">
+<table class="centerForm">
+  <tr>
+    <th id="formTitle" colspan="2">
+    {{- with .patch_run.Name -}}
+        <h3>Patch Run: {{ . }}
+    {{- else -}}
+        <h3>Create New Patch Run</h3>
+    {{- end -}}
+    </th>
+  </tr>
+  {{- if .patch_run.ID -}}
+  <tr>
+    <th>Created At</th>
+    <td>{{ FormatAsISO8601 .patch_run.CreatedAt }}</td>
+  </tr>
+  {{- end -}}
+  {{- if .patch_run.ID -}}
+  <tr>
+    <th>Updated At</th>
+    <td>{{ FormatAsISO8601 .patch_run.UpdatedAt }}</td>
+  </tr>
+  {{- end -}}
+  {{- if .patch_run.DeletedAt.Valid -}}
+  <tr>
+    <th>Deleted At</th>
+    <td>{{ FormatAsISO8601 .patch_run.DeletedAt.Time }}</td>
+  </tr>
+  {{- end -}}
+  <tr>
+    <td colspan="2">
+    <form id="patchRunForm" method="post">
+    <table class="embedded">
+  <tr>
+    <th><label for="Name">Patch Run Name:</label></th>
+    <td><input type="text" id="Name" name="Name" value="{{ .patch_run.Name }}" size="50" required></td>
+  </tr>
+  <tr>
+    <th><label for="Description">Description:</label></th>
+    <td><input type="text" id="Description" name="Description" value="{{ .patch_run.Description }}" size="50"></td>
+  </tr>
+  <tr>
+    <th><label for="PatchWindow">Patch Window:</label></th>
+    <td>
+      <div class="input-group">
+        <div id="PatchWindow">
+          <input type="text" class="typeahead" form="patchRunForm" id="PatchWindow" name="PatchWindow" value="{{ .patch_run.PatchWindow }}" placeholder="Start typing to search patch windows..." size="50" required>
+        </div>
+        <span class="input-group-text input-group-append">
+          <i id="PatchWindow-Refresh" class="fa fa-refresh fa-1x" title="Refresh Patch Windows"></i>
+        </span>
+      </div>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/typeahead.js/0.11.1/typeahead.bundle.js" integrity="sha384-up5m4qUNHDA0trts45bnm/JBBOfOMbOKtm/uAUX17yitl3RroI3RbrzmkWKBPT3w" crossorigin="anonymous"></script>
+      <script type="text/javascript" src="/assets/js/patchWindows.js" ></script>
+    </td>
+  </tr>
+  <tr>
+    <th><label for="StartTime">Start Time:</label></th>
+    <td><input type="datetime-local" id="StartTime" name="StartTime" value="{{ with .patch_run.StartTime}}{{ FormatAsDateTimeLocal . }}{{ end }}" required></td>
+  </tr>
+  <tr>
+    <th><label for="EndTime">End Time:</label></th>
+    <td><input type="datetime-local" id="EndTime" name="EndTime" value="{{ with .patch_run.EndTime }}{{ FormatAsDateTimeLocal . }}{{ end }}" required></td>
+  </tr>
+  <tr>
+    <th>Chat Rooms</th>
+    <td>
+    {{- with .patch_run.GetEnabledChatRooms -}}
+      <table class="borderless" id="chatRoomList">
+        {{- range . -}}
+        <tr>
+          <td>
+            <label class="switch">
+              <input type="checkbox" id="ChatRoom-{{ .ID }}" name="rooms" value="{{ .ID }}" {{ if $.patch_run.IsChatRoomLinked .ID }} checked {{ end }}>
+              <span class="slider round"></span>
+            </label>
+          </td>
+          <td><a href="/config/ChatRoom/{{ .ID  }}" target="_blank">{{ .Name }}</a></td>
+        </tr>
+        {{- end -}}
+      </table>
+    {{- else -}}
+      <em>No Enabled Chat Roooms Found.</em><br>
+      <button class="btn btn-primary" onClick="window.location.href='/config/ChatRoom'">Manage Chat Roooms</button>
+    {{- end -}}
+    </td>
+  </tr>
+  <tr class="submit">
+    <td colspan="2">
+      <input type="submit" class="btn btn-primary" value="{{- if .patch_run.ID -}} Modify Patch Run {{- else -}} Add Patch Run {{- end -}}">
+      <input type="reset" class="btn btn-secondary">
+    </td>
+  </tr>
+  </table>
+  </form>
+  </td>
+  </tr>
+  {{- if .patch_run.ID -}}
+  <tr>
+    <th>Jenkins Jobs</th>
+    <td>
+    {{- with .patch_run.GetJenkinsJobs -}}
+      <table class="borderless" id="jenkinsJobs">
+      {{- range . -}}
+        <tr>
+          <td><a href="/config/jenkinsJob/{{ .ID }}">{{ .Name }}</a></td>
+          <td>
+            <button class="btn btn-info" name="action" value="Preview" onClick="window.location.href='/patchRun/{{ $.patch_run.ID }}/buildJenkinsJob/{{ .ID }}'" >Preview</button>
+            <form class="singleButtonForm" method="post" action="/patchRun/{{ $.patch_run.ID }}/buildJenkinsJob/{{ .ID }}">
+              <input type="submit" class="btn btn-primary" name="action" value="Run" {{- if not .Enabled }} disabled {{- end -}}>
+            </form>
+          </td>
+        </tr>
+      {{- end -}}
+      </table>
+    {{- else -}}
+      <em>No Jenkins Jobs Found.</em><br>
+      <button class="btn btn-primary" onClick="window.location.href='/config/jenkinsServer">Manage Jenkins Servers</button>
+    {{- end -}}
+    {{- with .patch_run.GetJenkinsBuilds -}}
+      <hr>
+      <table class="borderless" id="jenkinsBuilds">
+      {{- range . -}}
+        <tr>
+        {{- if .APIBuildID -}}
+          <td><a href="{{ .URL }}" target="_blank">{{ with .JenkinsJob}}{{ .Name }}{{ else }}(BAD JOB ID){{ end }} #{{ .APIBuildID }}</a></td>
+        {{- else -}}
+          <td>
+            {{ with .JenkinsJob}}{{ .Name }}{{ else }}(BAD JOB ID){{ end }} <em>Queued: takes about 6 seconds</em>
+            <button class="btn btn-primary" onClick="location.reload();">Refresh</button>
+          </td>
+        {{- end -}}
+          {{/* <td>(buttons?)</td> */}}
+        </tr>
+      {{- end -}}
+      </table>
+    {{- end -}}
+    </td>
+  </tr>
+  <tr>
+    <th>Trello Boards</th>
+    <td>
+    {{- with .patch_run.GetTrelloBoards -}}
+      <table class="borderless" id="trelloBoardList">
+      {{- range . -}}
+        <tr>
+          <td><a href="{{ .URL }}" target="_blank">{{ .Name }}</a></td>
+          <td>
+            <form method="post" action="/trelloboard/{{ .ID }}">
+              <input type="hidden" name="_method" value="DELETE">
+              <input type="submit" class="btn btn-danger" value="Delete">
+            </form>
+          </td>
+        </tr>
+      {{- end -}}
+      </table>
+    {{- end -}}
+      <table class="borderless" id="trelloBoardForm">
+      <form method="post" action="/patchRun/{{ .patch_run.ID }}/createTrelloBoard">
+        <tr>
+          <td><label for="Name">BoardName:<label></td>
+          <td><input type="text" name="Name" value="{{ .patch_run.Name }}"></td>
+        </tr>
+        <tr>
+          <td><label for="Name">Color:<label></td>
+          <td><input type="text" Name="Background" value="random"></td>
+        </tr>
+        <tr class="submit">
+          <td colspan="2"><input type="submit" class="btn btn-primary" id="createTrelloBoard" value="Create Trello Board"></td>
+        </tr>
+      </form>
+      </table>
+    </td>
+  </tr>
+  <tr>
+    <th>Additional Information</th>
+    <td>
+      <button class="btn btn-primary" onClick="window.location.href='/patchRun/{{ .patch_run.ID }}/applications'">Applications</button>
+      <button class="btn btn-primary" onClick="window.location.href='/patchRun/{{ .patch_run.ID }}/appsEnvs'">Apps/Envs List</button>
+      <button class="btn btn-primary" onClick="window.location.href='/patchRun/{{ .patch_run.ID }}/serverList'">Server List</button>
+      <button class="btn btn-primary" onClick="window.location.href='/patchRun/{{ .patch_run.ID }}/serverCSV'">Download Server CSV</button>
+    </td>
+  </tr>
+  <tr>
+    <th>Actions</th>
+    <td>
+        <form class="singleButtonForm" method="post" action="/patchRun/{{ .patch_run.ID }}/runQuery">
+        <input type="submit" class="btn btn-primary" value="Re-Query PuppetDB" {{ if not isPuppetServersEnabled }} disabled {{ end }}>
+        </form>
+        <form class="singleButtonForm" method="post" action="/patchRun/{{ .patch_run.ID }}">
+        <input type="hidden" name="_method" value="DELETE">
+        <input type="submit" class="btn btn-danger" value="Delete Patch Run">
+        </form>
+    </td>
+  </tr>
+  {{- end -}}
+</table>
+</div>

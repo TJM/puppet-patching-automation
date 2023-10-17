@@ -1,0 +1,40 @@
+{{- /* NOTE: This is a partial template to be included inside other templates. */ -}}
+{{ $myEmail := .session.Get "email" }}
+  <div class="RBACRoleForm">
+    <table class="centerForm">
+      <tr>
+        <th id="formTitle" colspan="2">
+          {{- with .roleName }}
+          <h3>RBAC Role: {{ . }}
+          {{- else -}}
+          <h3>Add New RBAC Role</h3>
+          {{- end -}}
+        </th>
+      <tr>
+        <th><label for="Users">Users:</label></th>
+        <td>
+          <ul>
+            {{- range .users -}}
+            <li>
+              <form method="post">
+                <input type="text" size="50" name="removeUser" value="{{ . }}" readonly>
+                <input type="submit" class="btn btn-danger" value="Remove" {{- if eq $myEmail . }} disabled{{ end }}>
+              </form>
+            </li>
+            {{- end -}}
+          </ul>
+          <form id="addUserForm" method="post">
+            <input type="email" size="50" id="newUser" name="addUser" placeholder="email address">
+            <input type="submit" class="btn btn-primary" class="btn btn-primary" value="Add">
+          </form>
+        </td>
+      </tr>
+      {{/* <tr class="submit">
+        <td colspan="2">
+          <input type="submit" class="btn btn-primary" value="{{- if .roleName -}} Modify RBAC Role {{- else -}} Add RBAC Role {{- end -}}" disabled>
+          <input type="reset" class="btn btn-secondary">
+        </td>
+      </tr> */}}
+    </table>
+    </form>
+  </div>

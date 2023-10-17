@@ -1,0 +1,127 @@
+{{- /* NOTE: This is a partial template to be included inside other templates. */ -}}
+  <div class="puppetTaskForm">
+    <table class="centerForm">
+      <tr>
+        <th id="formTitle" colspan="2">
+          {{- with .task.Name }}
+          <h3>Puppet Task: {{ . }}
+          {{- else -}}
+          <h3>Add New Puppet Task</h3>
+          {{- end -}}
+        </th>
+      {{- if .task.ID -}}
+      <form id="puppetTask" method="post">
+      <tr>
+        <th><label for="Enabled">Enabled:</label></th>
+        <td>
+            <label class="switch">
+              <input type="checkbox" id="Enabled" name="Enabled" value="true" {{ if .task.Enabled }} checked {{ end }}>
+              <span class="slider round"></span>
+            </label>
+        </td>
+      </tr>
+      <tr>
+        <th>Available On:</th>
+        <td>
+          <table class="borderless">
+            <tr>
+              <td class="switches">
+                <label class="switch">
+                  <input type="checkbox" id="IsForPatchRun" name="IsForPatchRun" value="true" {{ if .task.IsForPatchRun }} checked {{ end }}>
+                  <span class="slider round"></span>
+                </label>
+                <label id="IsForPatchRun">Patch Run</label>
+              </td>
+              <td class="switches">
+                <label class="switch">
+                  <input type="checkbox" id="IsForApplication" name="IsForApplication" value="true" {{ if .task.IsForApplication }} checked {{ end }}>
+                  <span class="slider round"></span>
+                </label>
+                <label id="IsForApplication">Application</label>
+              </td>
+              <td class="switches">
+                <label class="switch">
+                  <input type="checkbox" id="IsForComponent" name="IsForComponent" value="true" {{ if .task.IsForApplication }} checked {{ end }}>
+                  <span class="slider round"></span>
+                </label>
+                <label id="IsForComponent">Component</label>
+              </td>
+              <td class="switches">
+                <label class="switch">
+                  <input type="checkbox" id="IsForServer" name="IsForServer" value="true" {{ if .task.IsForServer }} checked {{ end }}>
+                  <span class="slider round"></span>
+                </label>
+                <label id="IsForServer">Server</label>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+      {{- end -}}
+      <tr>
+        <th>Name:</th>
+        <td>{{ .task.Name }}</td>
+      </tr>
+      <tr>
+        <th>Environment:</th>
+        <td>{{ .task.Environment }}</td>
+      </tr>
+      <tr>
+        <th>Description:</th>
+        <td>{{ .task.Description }}</td>
+      </tr>
+      <tr>
+        <th>Associated Servers:</th>
+        <td>
+          {{ with .task.GetPuppetServers }}
+          <ul>
+            {{ range . }}
+            <li><a href="/config/puppetServer/{{ .ID }}/tasks ">{{ .Name }}</a></li>
+            {{ end }}
+          </ul>
+          {{ else }}
+          (none)
+          {{ end }}
+        </td>
+      </tr>
+      <tr class="submit">
+        <td colspan="2"><input type="submit" class="btn btn-primary"> <input type="reset" class="btn btn-secondary"></td>
+      </tr>
+      </form>
+      {{- if .task.ID }}
+      <tr class="submit">
+        <td colspan="2">
+          <table class="borderless">
+            <tr class="submit">
+              <td>
+                <form method="post" action="/config/puppetTask/{{ .task.ID }}/updateFromAPI">
+                  <input type="submit" class="btn btn-primary" value="Update from API">
+                </form>
+              </td>
+              <td>
+                <form method="post" action="/config/puppetTask/{{ .task.ID }}">
+                  <input type="hidden" name="_method" value="DELETE">
+                  <input type="submit" class="btn btn-danger" value="Delete">
+                </form>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+      {{- end -}}
+      {{/* Parameters Each have their own FORM, so we have to end our form above here. */}}
+      <tr>
+        <th>Parameters:</th>
+        <td>
+        {{- if .task.Params -}}
+        {{- range .task.Params -}}
+          {{- template "puppetTaskParam-form.gohtml" . -}}
+          <br>
+        {{- end -}}
+        {{- else -}}
+        (none)
+        {{- end -}}
+        </td>
+      </tr>
+    </table>
+  </div>

@@ -1,0 +1,30 @@
+{{- template "header.gohtml" . -}}
+  <h2>Jenkins Server: {{- with .jenkins_server }} {{ .Name }} {{- end -}}</h1>
+  {{- if .jenkins_api_jobs -}}
+  <div>
+    <table class="main">
+      <tr>
+        <th>Name</th>
+        <th>Actions</th>
+      </tr>
+    {{- range .jenkins_api_jobs -}}
+      <tr>
+        <td><a href="{{ .Url }}" target="_blank">{{ .Name }}</a></td>
+        <td>
+          {{- if jenkinsClassIsFolder .Class -}}
+          <button class="btn btn-primary" onClick="window.location.href='/config/jenkinsServer/{{ $.jenkins_server.ID }}/apiJobs{{ $.path }}/{{ .Name }}'">--></button>
+          {{- else -}}
+          <form action="/config/jenkinsServer/{{ $.jenkins_server.ID }}/addJob{{ $.path }}/{{ .Name }}" method="POST">
+          <input type="submit" class="btn btn-primary" name="Action" value="Add Job">
+          </form>
+          {{- end -}}
+        </td>
+      </tr>
+    {{- end -}}
+    </table>
+  </div>
+  {{- else -}}
+  <h6>No Jenkins Jobs Found!</h6>
+  {{- end -}}
+  {{/* {{- template "jenkinsJob-form.gohtml" . -}} */}}
+{{- template "footer.gohtml" . -}}

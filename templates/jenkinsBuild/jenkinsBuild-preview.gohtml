@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link type="text/css" href="/assets/Styles/styles.css" rel="stylesheet">
+    <title>Build Jenkins Job: {{ .jenkins_job.Name }}</title>
+  </head>
+  <body>
+    {{- template "common-navBar.gohtml" . }}
+  <button class="btn btn-primary" onClick="window.location.href='/patchRun/{{ .patch_run.ID }}'">Back to Patch Run</button>
+    <h1>Jenkins Job: {{ .jenkins_job.Name }}</h1>
+    <h2>Patch Run: {{ .patch_run.Name }}</h2>
+
+  <div class="jenkinsJobForm">
+  <form method="post">
+    <table class="centerForm">
+      <tr>
+        <th id="formTitle" colspan="2">
+          <h3>{{ .jenkins_job.Name }}
+        </th>
+      <tr>
+        <th>Description:</th>
+        <td>{{ .jenkins_job.Description }}</td>
+      </tr>
+      <tr>
+        <th>URL:</th>
+        <td><a href="{{ .jenkins_job.URL }}" target="_blank">{{ .jenkins_job.URL }}</a></td>
+      </tr>
+
+      <tr>
+        <th>Parameters:</th>
+        <td>
+        {{- if .jenkins_job.Params -}}
+        {{- range .jenkins_job.Params -}}
+          <table class="inside" id="jenkinsParameters">
+            <tr>
+              <th>Name:</th>
+              <td>{{ .Name }}</td>
+            </tr>
+            <tr>
+              <th>Type:</th>
+              <td>{{ .Type }}</td>
+            </tr>
+            <tr>
+              <th>Description:</th>
+              <td>{{ .Description }}</td>
+            </tr>
+            <tr>
+              <th>Value:</th>
+              <td>
+                <textarea id="buildParam[{{ .Name }}]" name="buildParam[{{ .Name }}]" rows="3" cols="65" placeholder="{{ .GetDefaultValue }}" readonly>{{ index $.build_params .Name }}</textarea>
+              </td>
+            </tr>
+          </table>
+          <br>
+        {{- end -}}
+        {{- else -}}
+        (none)
+        {{- end -}}
+        </td>
+      </tr>
+      <tr>
+        <th><label for="waitForBuild">Wait for build:</label></th>
+        <td>
+            <label class="switch">
+              <input type="checkbox" id="waitForBuild" name="waitForBuild" value="true">
+              <span class="slider round"></span>
+            </label>
+        </td>
+      </tr>
+      <tr class="submit">
+        <td colspan="2">
+        <input type="submit" name="action" value="Build" {{- if not .jenkins_job.Enabled }} disabled {{- end -}}> <input type="reset" class="btn btn-secondary">
+        </td>
+      </tr>
+    </table>
+  </form>
+  </div>
+
+
+
+  </body>
+</html>

@@ -1,0 +1,33 @@
+{{- /* NOTE: This is a partial template to be included inside other templates. */ -}}
+<div class="puppetPlanParamForm">
+<form action="/config/puppetPlanParam/{{ .ID }}" method="post">
+{{- if .IsNotInPlan -}}
+  <input type="hidden" name="_method" value="DELETE">
+{{- end -}}
+  <table class="inside" id="planParameters">
+    <tr>
+      <th>Name:</th>
+      <td>{{ .Name }}{{ if .IsNotInPlan }} <span class="text-danger"><em>(Not part of Puppet Plan anymore)</em></span>{{ end }}</td>
+    </tr>
+    <tr>
+      <th>Type:</th>
+      <td>{{ .Type }}</td>
+    </tr>
+    <tr>
+      <th>Description:</th>
+      <td>{{ .Description }}</td>
+    </tr>
+    <tr>
+      <th>Template Value:<br>(go template)</th>
+      <td>
+        <textarea id="TemplateValue" name="TemplateValue" rows="3" cols="65" {{if .IsNotInPlan }}disabled{{ end}}>{{ .TemplateValue }}</textarea>
+      </td>
+    </tr>
+    <tr class="submit">
+      <td colspan="2">
+      <input type="submit" {{if .IsNotInPlan}}class="btn btn-danger" value="Delete"{{else}}class="btn btn-primary" value="Update"{{ end }}> <input type="reset" class="btn btn-secondary">
+      </td>
+    </tr>
+  </table>
+</form>
+</div>

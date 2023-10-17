@@ -1,0 +1,107 @@
+{{- /* NOTE: This is a partial template to be included inside other templates. */ -}}
+  <div class="jenkinsJobForm">
+    <table class="centerForm">
+      <tr>
+        <th id="formTitle" colspan="2">
+          {{- with .jenkins_job.Name }}
+          {{/* <h3>Jenkins Job: {{ . }} */}}
+          {{- else -}}
+          <h3>Add New Jenkins Job</h3>
+          {{- end -}}
+        </th>
+      {{- if .jenkins_job.ID -}}
+      <form id="jenkinsJob" method="post">
+      <tr>
+        <th><label for="Enabled">Enabled:</label></th>
+        <td>
+            <label class="switch">
+              <input type="checkbox" id="Enabled" name="Enabled" value="true" {{ if .jenkins_job.Enabled }} checked {{ end }}>
+              <span class="slider round"></span>
+            </label>
+        </td>
+      </tr>
+      <tr>
+        <th>Show Job On:</th>
+        <td>
+          <table class="borderless">
+            <tr>
+              <td class="switches">
+                <label class="switch">
+                  <input type="checkbox" id="IsForPatchRun" name="IsForPatchRun" value="true" {{ if .jenkins_job.IsForPatchRun }} checked {{ end }}>
+                  <span class="slider round"></span>
+                </label>
+                <label id="IsForPatchRun">Patch Run</label>
+              </td>
+              <td class="switches">
+                <label class="switch">
+                  <input type="checkbox" id="IsForApplication" name="IsForApplication" value="true" {{ if .jenkins_job.IsForApplication }} checked {{ end }}>
+                  <span class="slider round"></span>
+                </label>
+                <label id="IsForApplication">Application</label>
+              </td>
+              <td class="switches">
+                <label class="switch">
+                  <input type="checkbox" id="IsForServer" name="IsForServer" value="true" {{ if .jenkins_job.IsForServer }} checked {{ end }}>
+                  <span class="slider round"></span>
+                </label>
+                <label id="IsForServer">Server</label>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+      {{- end -}}
+      <tr>
+        <th>Jenkins Job Name:</th>
+        <td>{{ .jenkins_job.Name }}</td>
+      </tr>
+      <tr>
+        <th>Description:</th>
+        <td>{{ .jenkins_job.Description }}</td>
+      </tr>
+      <tr>
+        <th>URL:</th>
+        <td><a href="{{ .jenkins_job.URL }}" target="_blank">{{ .jenkins_job.URL }}</a></td>
+      </tr>
+      <tr>
+      <tr class="submit">
+        <td colspan="2"><input type="submit" class="btn btn-primary"> <input type="reset" class="btn btn-secondary"></td>
+      </tr>
+      </form>
+      {{- if .jenkins_job.ID }}
+      <tr class="submit">
+        <td colspan="2">
+          <table class="borderless">
+            <tr class="submit">
+              <td>
+                <form method="post" action="/config/jenkinsJob/{{ .jenkins_job.ID }}/updateFromAPI">
+                  <input type="submit" class="btn btn-primary" value="Update from API">
+                </form>
+              </td>
+              <td>
+                <form method="post" action="/config/jenkinsJob/{{ .jenkins_job.ID }}">
+                  <input type="hidden" name="_method" value="DELETE">
+                  <input type="submit" class="btn btn-danger" value="Delete">
+                </form>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+      {{- end -}}
+      {{/* Parameters Each have their own FORM, so we have to end our form above here. */}}
+      <tr>
+        <th>Parameters:</th>
+        <td>
+        {{- if .jenkins_job.Params -}}
+        {{- range .jenkins_job.Params -}}
+          {{- template "jenkinsJobParam-form.gohtml" . -}}
+          <br>
+        {{- end -}}
+        {{- else -}}
+        (none)
+        {{- end -}}
+        </td>
+      </tr>
+    </table>
+  </div>

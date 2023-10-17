@@ -1,0 +1,337 @@
+default:
+  image: golang:1.20 # NOTE: need several tools like "make/gcc/etc" that are in the non-alpine image
+  # tags:
+  #   - internal
+
+include:
+  - template: Security/Dependency-Scanning.gitlab-ci.yml
+  - template: Security/License-Scanning.gitlab-ci.yml
+  - template: Security/SAST.gitlab-ci.yml
+  - template: Security/Secret-Detection.gitlab-ci.yml
+  - template: Workflows/MergeRequest-Pipelines.gitlab-ci.yml
+  - project: shared-services/process
+    ref: v28.0.0
+    file: /renovate/templates/default-gitlab-ci.yml
+
+## List of files that will cause a docker image to be rebuilt
+.docker_build_changes: &docker_build_changes
+  - Makefile
+  - Dockerfile
+  - /assets/**/*
+  - /config/**/*
+  - "**/*.go"
+  - go.mod
+  - go.sum
+
+## List of files that will cause a helm chart to be built:
+.helmchart_build_changes: &helmchart_build_changes
+  - helmchart/patching-automation/*
+
+stages:
+  - init
+  - validate
+  - build
+  - test
+  - deploy
+
+# Basic Job to make a successful pipeline run for non-docker related changes
+init:
+  stage: init
+  script:
+    - env | grep ^CI # DEBUG
+    - exit 0
+
+go-lint:
+  stage: validate
+  timeout: 3m
+  interruptible: true
+  rules:
+    - if: $RENOVATE
+      when: never
+    - changes: *docker_build_changes
+  script:
+    - make lint
+
+go-sec:
+  stage: validate
+  timeout: 3m
+  interruptible: true
+  rules:
+    - if: $RENOVATE
+      when: never
+    - changes: *docker_build_changes
+  script:
+    - make sec
+
+go-tidy:
+  stage: validate
+  timeout: 3m
+  interruptible: true
+  rules:
+    - if: $RENOVATE
+      when: never
+    - changes: *docker_build_changes
+  script:
+    - make tidy
+
+helm-chart-test:
+  stage: validate
+  image: quay.io/helmpack/chart-testing:v3.9.0
+  timeout: 3m
+  interruptible: true
+  rules:
+    - if: $RENOVATE
+      when: never
+    - changes: *helmchart_build_changes
+  variables:
+    CT_CHART_DIRS: helmchart
+    CT_VALIDATE_MAINTAINERS: "false"
+  script:
+    # - helm repo add bitnami https://raw.githubusercontent.com/bitnami/charts/pre-2022/bitnami
+    - helm repo add bitnami https://charts.bitnami.com/bitnami
+    - git fetch --quiet # So ct can figure out what has changed
+    - ct lint
+
+helm-chart-build:
+  stage: build
+  needs:
+    - helm-chart-test
+  image: quay.io/helmpack/chart-testing:v3.9.0
+  timeout: 3m
+  interruptible: true
+  variables: # Setting these will quiet needless errors from make
+    GOOS: linux
+    GOARCH: x86_64
+    GOPATH: /go
+    HELM_PUBLISH_AUTH: "-u ${CI_REGISTRY_USER}:${CI_REGISTRY_PASSWORD}"
+  rules:
+    - if: $RENOVATE
+      when: never
+    - changes: *helmchart_build_changes
+    - if: >- # Also build on "protected" release tag
+        $CI_COMMIT_REF_PROTECTED == "true" &&
+        $CI_COMMIT_TAG =~ /v[0-9]+\.[0-9]+\.[0-9]+.*/
+  script:
+    - apk add make
+    - make helmpush
+
+.build_with_kaniko:
+  #Hidden job to use as an "extends" template
+  image:
+    name: gcr.io/kaniko-project/executor:debug
+    entrypoint: [""]
+  stage: build
+  variables:
+    IMAGE_LABELS: >
+      --label org.opencontainers.image.vendor=$CI_SERVER_URL/$GITLAB_USER_LOGIN
+      --label org.opencontainers.image.authors=$CI_SERVER_URL/$GITLAB_USER_LOGIN
+      --label org.opencontainers.image.revision=$CI_COMMIT_SHA
+      --label org.opencontainers.image.source=$CI_PROJECT_URL
+      --label org.opencontainers.image.documentation=$CI_PROJECT_URL
+      --label org.opencontainers.image.licenses=$CI_PROJECT_URL
+      --label org.opencontainers.image.url=$CI_PROJECT_URL
+      --label vcs-url=$CI_PROJECT_URL
+      --label com.gitlab.ci.user=$CI_SERVER_URL/$GITLAB_USER_LOGIN
+      --label com.gitlab.ci.email=$GITLAB_USER_EMAIL
+      --label com.gitlab.ci.tagorbranch=$CI_COMMIT_REF_NAME
+      --label com.gitlab.ci.pipelineurl=$CI_PIPELINE_URL
+      --label com.gitlab.ci.commiturl=$CI_PROJECT_URL/commit/$CI_COMMIT_SHA
+      --label com.gitlab.ci.cijoburl=$CI_JOB_URL
+      --label com.gitlab.ci.mrurl=$CI_PROJECT_URL/-/merge_requests/$CI_MERGE_REQUEST_ID
+  script:
+    - |
+      echo "Building and shipping image to $CI_REGISTRY_IMAGE"
+      # Build date for opencontainers
+      BUILDDATE="'$(date '+%FT%T%z' | sed -E -n 's/(\+[0-9]{2})([0-9]{2})$/\1:\2/p')'" #rfc 3339 date
+      IMAGE_LABELS="$IMAGE_LABELS --label org.opencontainers.image.created=$BUILDDATE --label build-date=$BUILDDATE"
+      # Description for opencontainers
+      BUILDTITLE=$(echo $CI_PROJECT_TITLE | tr " " "_")
+      IMAGE_LABELS="$IMAGE_LABELS --label org.opencontainers.image.title=$BUILDTITLE --label org.opencontainers.image.description=$BUILDTITLE"
+      # Add ref.name for opencontainers
+      IMAGE_LABELS="$IMAGE_LABELS --label org.opencontainers.image.ref.name=$CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME"
+
+      # Build Version Label and Tag from git tag
+      VERSIONLABEL=$CI_COMMIT_TAG
+      if [[ -n "$VERSIONLABEL" ]]; then
+        IMAGE_LABELS="$IMAGE_LABELS --label org.opencontainers.image.version=$VERSIONLABEL"
+        ADDITIONALTAGLIST="$ADDITIONALTAGLIST $VERSIONLABEL"
+      fi
+
+      ADDITIONALTAGLIST="$ADDITIONALTAGLIST $(echo $CI_COMMIT_REF_NAME | sed -e 's#/#_#g') $CI_COMMIT_SHORT_SHA"
+      if [[ "$CI_COMMIT_BRANCH" == "$CI_DEFAULT_BRANCH" ]]; then ADDITIONALTAGLIST="$ADDITIONALTAGLIST latest"; fi
+      if [[ -n "$ADDITIONALTAGLIST" ]]; then
+        for TAG in $ADDITIONALTAGLIST; do
+          FORMATTEDTAGLIST="${FORMATTEDTAGLIST} --tag $CI_REGISTRY_IMAGE:$TAG ";
+        done;
+      fi
+
+      # Reformat Docker tags to kaniko's --destination argument:
+      FORMATTEDTAGLIST=$(echo "${FORMATTEDTAGLIST}" | sed s/\-\-tag/\-\-destination/g)
+
+      echo $FORMATTEDTAGLIST
+      echo $IMAGE_LABELS
+      mkdir -p /kaniko/.docker
+      echo "{\"auths\":{\"$CI_REGISTRY\":{\"auth\":\"$(echo -n $CI_REGISTRY_USER:$CI_REGISTRY_PASSWORD | base64)\"}}}" > /kaniko/.docker/config.json
+      /kaniko/executor --context $CI_PROJECT_DIR --dockerfile $CI_PROJECT_DIR/Dockerfile $FORMATTEDTAGLIST $IMAGE_LABELS
+
+build-docker-image:
+  extends: .build_with_kaniko
+  stage: build
+  rules:
+    - if: $RENOVATE
+      when: never
+    - changes: *docker_build_changes
+    - if: >- # Also build on "protected" release tag
+        $CI_COMMIT_REF_PROTECTED == "true" &&
+        $CI_COMMIT_TAG =~ /v[0-9]+\.[0-9]+\.[0-9]+.*/
+  needs:
+    - init
+    - go-lint
+    - go-sec
+    - go-tidy
+  #This causes CI CD Variables to be taken from GitLab Project definition for variable scope "push-to-docker-hub",
+  # which overrides CI_REGISTRY, CI_REGISTRY_IMAGE, CI_REGISTRY_USER and CI_REGISTRY_PASSWORD
+  # these variables with this scope would need to be created if you copy this project to another group or instance
+  # environment:
+  #   name: push-to-docker-hub
+
+.flux-deployment:
+  variables:
+    GIT_NAME: $GITLAB_USER_NAME
+    GIT_EMAIL: $GITLAB_USER_EMAIL
+  stage: deploy
+  rules:
+    - if: $RENOVATE
+      when: never
+    - if: >-
+        $FLUX_REPO &&
+        $FLUX_RELEASE_FILE &&
+        $SSH_PRIVATE_KEY &&
+        $SSH_KNOWN_HOSTS
+      changes: *docker_build_changes
+  image: ghcr.io/xvik/yaml-updater:1.4.2
+  before_script:
+    ##
+    ## Install prerequisites if not already installed. May need adjusted for OS.
+    ##
+    - command -v ssh-agent >/dev/null || apk add openssh-client
+    - command -v git >/dev/null || apk add git
+    - command -v make >/dev/null || apk add make
+    - command -v awk >/dev/null || apk add awk
+
+    ##
+    ## Run ssh-agent (inside the build environment)
+    ##
+    - eval $(ssh-agent -s)
+
+    ##
+    ## Add the SSH key stored in SSH_PRIVATE_KEY variable to the agent store
+    ## We're using tr to fix line endings which makes ed25519 keys work
+    ## without extra base64 encoding.
+    ## https://gitlab.com/gitlab-examples/ssh-private-key/issues/1#note_48526556
+    ##
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+
+    ##
+    ## Create the SSH directory and give it the right permissions
+    ## ... and populate SSH_KNOWN_HOSTS
+    ##
+    - mkdir -m 700 -p ~/.ssh
+    - echo "$SSH_KNOWN_HOSTS" >> ~/.ssh/known_hosts
+
+    ##
+    ## Optionally, if you will be using any Git commands, set the user name and
+    ## and email.
+    ##
+    - git config --global user.email "$GIT_EMAIL"
+    - git config --global user.name "GIT_NAME"
+  script:
+    - set -e
+    - |
+      HELM_CHART_VERSION=$(awk '/^version: / {print $2}' helmchart/patching-automation/Chart.yaml)
+    - git clone ${FLUX_REPO} FLUX_REPO
+    - cd FLUX_REPO
+    - "[[ -n $CI_COMMIT_TAG ]] && RELEASE_TAG=$CI_COMMIT_TAG || RELEASE_TAG=$CI_COMMIT_SHORT_SHA"
+    - |
+      cat <<- EOF > ${CI_COMMIT_SHORT_SHA}.yaml
+      spec:
+        chart:
+          version: ${HELM_CHART_VERSION}
+        values:
+          image:
+            tag: ${RELEASE_TAG}
+      EOF
+    - |
+      echo "*** Merging Helm Chart ${HELM_CHART_VERSION} / release ${RELEASE_TAG} Into: ${FLUX_RELEASE_FILE}"
+    - /usr/local/bin/yaml-updater "${FLUX_RELEASE_FILE}" ${CI_COMMIT_SHORT_SHA}.yaml --no-backup --delete-path spec.values.image.tag --delete-path spec.chart.version
+    - rm ${CI_COMMIT_SHORT_SHA}.yaml
+    - git diff
+    - git add "${FLUX_RELEASE_FILE}"
+    - |
+      git commit -m "update: [GitLab] $CI_PROJECT_NAME ($CI_JOB_ID) - $CI_JOB_STAGE
+      * Job URL: <$CI_JOB_URL>
+      * Project URL: <$CI_PROJECT_URL>
+      "
+    - git status
+    - git push
+
+# Deploy to "production" on tagged releases to "master" branch.
+deploy-production:
+  extends: .flux-deployment
+  rules:
+    - if: $RENOVATE
+      when: never
+    - if: >- # only build if *all* of the below are true (&&)
+        $FLUX_REPO &&
+        $FLUX_RELEASE_FILE &&
+        $SSH_PRIVATE_KEY &&
+        $SSH_KNOWN_HOSTS &&
+        $CI_COMMIT_REF_PROTECTED == "true" &&
+        $CI_COMMIT_TAG =~ /v[0-9]+\.[0-9]+\.[0-9]+.*/
+  environment:
+    name: production
+
+# Deploy to "dev" on commits (merges) to "master" branch.
+deploy-dev:
+  extends: .flux-deployment
+  rules:
+    - if: $RENOVATE
+      when: never
+    - if: $CI_COMMIT_TAG
+      when: never
+    - if: >- # only build if *all* of the below are true or set (&&)
+        $FLUX_REPO &&
+        $FLUX_RELEASE_FILE &&
+        $SSH_PRIVATE_KEY &&
+        $SSH_KNOWN_HOSTS &&
+        $CI_COMMIT_REF_PROTECTED == "true" &&
+        $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      changes: *docker_build_changes
+  environment:
+    name: dev
+
+# NOTE: this is very limited, any commits will deploy to this test environment for now.
+deploy-test:
+  extends: .flux-deployment
+  rules:
+    - if: $RENOVATE
+      when: never
+    - if: $CI_COMMIT_TAG
+      when: never
+    - if: $CI_COMMIT_REF_PROTECTED == "true"
+      when: never
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: never
+    - if: >-
+        $FLUX_REPO &&
+        $FLUX_RELEASE_FILE &&
+        $SSH_PRIVATE_KEY &&
+        $SSH_KNOWN_HOSTS
+      changes: *docker_build_changes
+  environment:
+    name: test
+
+# Force renovate to run on GCP
+renovate:
+  tags:
+    - anthos-den3

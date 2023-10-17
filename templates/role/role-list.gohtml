@@ -1,0 +1,23 @@
+<!--Embed the header.html template at this location-->
+{{- template "header.gohtml" . -}}
+  {{- if .roles -}}
+  <div>
+    <table class="main">
+      <tr>
+        <th>Name</th>
+        <th>Actions</th>
+      </tr>
+    {{- range .roles -}}
+      <tr>
+        <td>{{ . }}</td>
+        <td>
+          <button class="btn btn-primary" onClick="window.location.href='/config/role/{{ . }}'">View/Edit</button>
+        </td>
+      </tr>
+    {{- end -}}
+    </table>
+  </div>
+    {{- else -}}
+    <h6>No Roles Found!</h6>
+    {{- end -}}
+{{- template "footer.gohtml" . -}}

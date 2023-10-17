@@ -1,0 +1,32 @@
+<!--Embed the header.html template at this location-->
+{{- template "header.gohtml" . -}}
+  {{- if .puppet_servers -}}
+  <div>
+    <table class="main">
+      <tr>
+        <th>Name</th>
+        <th>Description</th>
+        <th>Hostname</th>
+        <th>Enabled</th>
+        <th>Actions</th>
+      </tr>
+    {{- range .puppet_servers -}}
+      <tr>
+        <td>{{ .Name }}</td>
+        <td>{{ .Description }}</td>
+        <td>{{ .Hostname }}</td>
+        <td>{{ if .Enabled }}✅{{ else }}🚨DISABLED🚨{{ end }}</td>
+        <td>
+          <button class="btn btn-primary" onClick="window.location.href='/config/puppetServer/{{ .ID }}'">Edit</button>
+          <button class="btn btn-primary" onClick="window.location.href='/config/puppetServer/{{ .ID }}/tasks'">Tasks</button>
+          <button class="btn btn-primary" onClick="window.location.href='/config/puppetServer/{{ .ID }}/plans'">Plans</button>
+        </td>
+      </tr>
+    {{- end -}}
+    </table>
+  </div>
+  {{- else -}}
+  <h6>No Puppet Servers Found!</h6>
+  {{- end -}}
+
+{{- template "footer.gohtml" . -}}

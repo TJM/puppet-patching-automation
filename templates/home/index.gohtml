@@ -1,0 +1,16 @@
+<!--Embed the header.html template at this location-->
+{{- template "header.gohtml" . -}}
+  <h1>{{ .title }}</h1>
+  <h6>Version: {{ .version }}</h6>
+  <br><br>
+  <div class="welcome">Welcome {{ .name }}! </div>
+  <div class="welcome">Happy Patching!</div>
+  <div class="welcome_button">
+    <button type="button"
+      class="btn btn-primary btn-lg"
+      onClick="window.location.href='/patchRun/latest'">
+      Latest Patch Run
+    </button>
+  </div>
+
+{{- template "footer.gohtml" . -}}

@@ -1,0 +1,84 @@
+{{- /* NOTE: This is a partial template to be included inside other templates. */ -}}
+  <div class="jenkinsServerForm">
+    <form id="jenkinsServer" method="post">
+    <table class="centerForm">
+      <tr>
+        <th id="formTitle" colspan="2">
+          {{- with .jenkins_server.Name }}
+          <h3>Jenkins Server: {{ . }}
+          {{- else -}}
+          <h3>Add New Jenkins Server</h3>
+          {{- end -}}
+        </th>
+      {{- if .jenkins_server.ID -}}
+      <tr>
+        <th><label for="Enabled">Enabled:</label></th>
+        <td>
+          <label class="switch">
+            <input type="checkbox" id="Enabled" name="Enabled" value="true" {{ if .jenkins_server.Enabled }} checked {{ end }}>
+            <span class="slider round"></span>
+          </label>
+        </td>
+      </tr>
+      {{- else -}}
+      <input type="hidden" id="Enabled" name="Enabled" value="true">
+      {{- end -}}
+      <tr>
+        <th><label for="Name">Jenkins Server Name:</label></th>
+        <td><input type="text" id="Name" name="Name" size="50" value="{{ .jenkins_server.Name }}" required></td>
+      </tr>
+      <tr>
+        <th><label for="Description">Description:</label></th>
+        <td><input type="text" id="Description" name="Description" value="{{ .jenkins_server.Description }}" size="50"></td>
+      </tr>
+      <tr>
+        <th><label for="Hostname">Hostname:</label></th>
+        <td><input type="text" id="Hostname" name="Hostname" size="50" value="{{ .jenkins_server.Hostname }}" placeholder="FQDN" required></td>
+      </tr>
+      <tr>
+        <th><label for="SSL">SSL (https):</label></th>
+        <td>
+          <table class="inside borderless">
+            <tr>
+              <td>
+                <label class="switch">
+                  <input type="checkbox" id="SSL" name="SSL" value="true" {{ if .jenkins_server.SSL }} checked {{ end }}>
+                  <span class="slider round"></span>
+                </label>
+              </td>
+              <td class="right"><label for="SSLSkipVerify">Skip SSL Verification (<span class="text-danger">INSECURE</span>):</label></th>
+              <td>
+                <label class="switch">
+                  <input type="checkbox" id="SSLSkipVerify" name="SSLSkipVerify" value="true" {{ if .jenkins_server.SSLSkipVerify }} checked {{ end }}>
+                  <span class="slider round"></span>
+                </label>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+      <tr>
+        <th><label for="Port">Port:</label></th>
+        <td><input type="number" id="Port" name="Port" size="5" min="1" max="65535" maxlength="5" value="{{ .jenkins_server.Port }}" required></td>
+      </tr>
+      <tr>
+        <th><label for="CACert">CA Certificate:</label></th>
+        <td><textarea id="CACert" name="CACert" rows="15" cols="65" placeholder="OPTIONAL">{{ .jenkins_server.CACert }}</textarea></td>
+      </tr>
+      <tr>
+        <th><label for="Username">Jenkins Username:</label></th>
+        <td><input type="text" id="Username" name="Username" size="50" value="{{ .jenkins_server.Username }}" required></td>
+      </tr>
+      <tr>
+        <th><label for="Token">Jenkins Token:</label></th>
+        <td><input type="password" id="Token" name="Token" size="50" {{- if .jenkins_server.Token -}} placeholder="(only needed if updating)" {{- else -}} required {{- end -}}></td>
+      </tr>
+      <tr class="submit">
+        <td colspan="2">
+          <input type="submit" class="btn btn-primary" value="{{- if .jenkins_server.ID -}} Modify JenkinsServer {{- else -}} Add JenkinsServer {{- end -}}">
+          <input type="reset" class="btn btn-secondary">
+        </td>
+      </tr>
+    </table>
+    </form>
+  </div>

@@ -1,0 +1,27 @@
+{{- template "header.gohtml" . -}}
+  {{- if .room.ID}}
+    <h2>Name: {{ .room.Name }}</h2>
+  {{- else -}}
+    <h2>Add New Chat Room</h2>
+  {{- end -}}
+  {{- template "chatRoom-form.gohtml" . -}}
+
+  {{- /* Only show delete button on update Chat Room Page. */ -}}
+  {{- if .room.ID -}}
+    <table class="borderless">
+      {{- if .room.DeletedAt.Valid -}}
+      <tr>
+        <th>Deleted At</th><td>{{ .room.DeletedAt.Time }}</td>
+      </tr>
+      {{- end -}}
+      <tr>
+        <td class="right">
+          <form method="post" action="/config/ChatRoom/{{ .room.ID }}">
+            <input type="hidden" name="_method" value="DELETE">
+            <input type="submit" class="btn btn-danger" value="Delete">
+          </form>
+        </td>
+      </tr>
+    </table>
+  {{- end -}}
+{{- template "footer.gohtml" . -}}

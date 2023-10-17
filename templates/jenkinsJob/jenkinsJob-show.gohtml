@@ -1,0 +1,4 @@
+{{- template "header.gohtml" . -}}
+  <h2>{{ .jenkins_job.Name }}</h2>
+  {{- template "jenkinsJob-form.gohtml" . -}}
+{{- template "footer.gohtml" . -}}

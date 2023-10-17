@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>SUCCESS!</title>
+    <link href="/assets/Styles/styles.css" rel="stylesheet">
+    {{- if .puppet_server -}}
+    <meta http-equiv="Refresh" content="0.5;url=/config/puppetServer/{{ .puppet_server.ID }}/plans">
+    {{- else -}}
+    <meta http-equiv="Refresh" content="0.5;url=/config/puppetPlan/{{ .plan.ID }}">
+    {{- end -}}
+  </head>
+  <body>
+    <h1>
+      SUCCESS!
+    </h1>
+    Redirecting back to Puppet Plan...
+  </body>
+</html>

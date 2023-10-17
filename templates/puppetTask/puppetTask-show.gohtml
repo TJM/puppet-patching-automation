@@ -1,0 +1,4 @@
+{{- template "header.gohtml" . -}}
+    <h1>Puppet Task: {{ .task.Name }}</h1>
+    {{- template "puppetTask-form.gohtml" . -}}
+{{- template "footer.gohtml" . -}}

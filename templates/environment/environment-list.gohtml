@@ -1,0 +1,18 @@
+{{- template "header.gohtml" . -}}
+    <h1>{{ .application.Name }} Environments </h1>
+    {{- if .environments -}}
+    <table>
+      <tr>
+        <th>Name</th><th>Environments</th>
+      </tr>
+    {{- range .environments -}}
+      <tr>
+        <td>{{ .Name }}</td>
+        <td><button class="btn btn-primary" onClick="window.location.href='/environment/{{ .ID }}/components'">Components</button></td>
+      </tr>
+    {{- end -}}
+    </table>
+    {{- else -}}
+    <h6>No Environments Found!</h6>
+    {{- end -}}
+{{- template "footer.gohtml" . -}}
